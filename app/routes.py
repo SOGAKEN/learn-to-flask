@@ -1,7 +1,6 @@
 import asyncio
 import logging
-
-from flask import jsonify
+from flask import Flask, jsonify
 
 from app import create_app
 from app.services import aws_service, azure_service, gcp_service
@@ -9,12 +8,11 @@ from app.services import aws_service, azure_service, gcp_service
 app = create_app()
 logging.basicConfig(level=logging.INFO)
 
-
 @app.route("/", methods=["GET", "POST"])
-def run_llm_comparison():
+async def run_llm_comparison():
     input_prompt = "Hello, LLM!"
 
-    results = asyncio.run(run_comparison(input_prompt))
+    results = await run_comparison(input_prompt)
 
     return jsonify({"message": "Comparison completed successfully", "results": results})
 
