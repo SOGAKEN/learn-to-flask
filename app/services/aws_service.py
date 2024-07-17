@@ -8,8 +8,8 @@ import boto3
 from botocore.exceptions import ClientError
 
 aws_client = boto3.client(
-    "bedrock-runtime",
-    region_name=os.getenv("AWS_DEFAULT_REGION", "ap-northeast-1"),
+    "bedrock",
+    region_name=os.getenv("AWS_DEFAULT_REGION", "us-east-1"),
     aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
     aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
 )
@@ -18,7 +18,7 @@ aws_client = boto3.client(
 async def get_aws_models():
     try:
         response = aws_client.list_foundation_models()
-        return [model["modelId"] for model in response["modelSummaries"]]
+        return [model["modelId"] for model in response.get("modelSummaries", [])]
     except ClientError as e:
         logging.error(f"Error fetching AWS models: {e}")
         return []
@@ -26,7 +26,14 @@ async def get_aws_models():
 
 async def query_aws(model_id, input_text):
     try:
-        response = aws_client.invoke_model(
+        runtime_client = boto3.client(
+            "bedrock-runtime",
+            region_name=os.getenv("AWS_DEFAULT_REGION", "us-east-1"),
+            aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+        )
+
+        response = runtime_client.invoke_model(
             modelId=model_id,
             contentType="application/json",
             accept="application/json",
