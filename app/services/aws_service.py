@@ -36,7 +36,11 @@ async def query_aws(model_id, input_text):
         )
 
         model_config = next(
-            (config for config in PROMPTS.values() if config["model_id"] == model_id),
+            (
+                config
+                for provider_model, config in PROMPTS.items()
+                if config["model_id"] == model_id and provider_model.startswith("aws.")
+            ),
             None,
         )
         if not model_config:
@@ -46,8 +50,10 @@ async def query_aws(model_id, input_text):
         body = json.dumps(
             {
                 "prompt": prompt,
-                "max_tokens_to_sample": model_config.get("max_tokens", 300),
-                "temperature": model_config.get("temperature", 0.5),
+                "max_tokens_to_sample": model_config.get("max_tokens", 1000),
+                "temperature": model_config.get("temperature", 0.7),
+                "top_p": model_config.get("top_p", 1),
+                "top_k": model_config.get("top_k", 250),
             }
         )
 
