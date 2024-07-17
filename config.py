@@ -11,4 +11,3 @@ class Config:
     AZURE_ENDPOINT = os.environ.get("AZURE_ENDPOINT")
     AZURE_KEY = os.environ.get("AZURE_KEY")
     AZURE_MODEL_ID = os.environ.get("AZURE_MODEL_ID")
-    BIGQUERY_DATASET_ID = os.environ.get("BIGQUERY_DATASET_ID")

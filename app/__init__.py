@@ -9,4 +9,6 @@ def create_app(config_class=Config):
 
     from app import routes
 
+    app.register_blueprint(routes.bp)
+
     return app

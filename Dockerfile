@@ -9,4 +9,7 @@ COPY . .
 
 ENV PYTHONUNBUFFERED True
 
+# デバッグ用：ディレクトリ構造を表示
+RUN ls -R
+
 CMD ["python", "run.py"]
