@@ -1,9 +1,12 @@
 import asyncio
 import logging
+import sys
+import traceback
 
 from flask import Blueprint, jsonify, request
 
 from app.services import aws_service, azure_service, gcp_service
+from app.utils import PROMPTS
 
 bp = Blueprint("main", __name__)
 
@@ -15,30 +18,39 @@ def health_check():
     return jsonify({"status": "OK"}), 200
 
 
-@bp.route("/app", methods=["POST"])
+@bp.route("/app", methods=["GET", "POST"])
 def run_llm_comparison():
-    input_prompt = request.json.get("prompt", "Hello, LLM!")
-    results = asyncio.run(run_comparison(input_prompt))
-    return jsonify({"message": "Comparison completed successfully", "results": results})
+    if request.method == "GET":
+        return jsonify({"message": "Please use POST method to run LLM comparison"}), 200
+
+    try:
+        input_prompt = request.json.get("prompt", "Hello, LLM!")
+        results = asyncio.run(run_comparison(input_prompt))
+        return jsonify(
+            {"message": "Comparison completed successfully", "results": results}
+        )
+    except Exception as e:
+        logging.error(f"Error in LLM comparison: {str(e)}")
+        logging.error(traceback.format_exc())
+        return jsonify({"error": "Internal Server Error", "message": str(e)}), 500
 
 
 async def run_comparison(input_prompt):
-    aws_models = await aws_service.get_aws_models()
-    gcp_models = await gcp_service.get_gcp_models()
-    azure_models = azure_service.get_azure_models()
+    try:
+        tasks = []
+        for provider, config in PROMPTS.items():
+            service = getattr(
+                sys.modules[__name__], f"{provider.split('.')[0]}_service"
+            )
+            tasks.append(service.run_query(provider, config["model_id"], input_prompt))
 
-    tasks = []
-    for provider, models, service in [
-        ("AWS", aws_models, aws_service),
-        ("GCP", gcp_models, gcp_service),
-        ("Azure", azure_models, azure_service),
-    ]:
-        for model_id in models:
-            tasks.append(service.run_query(provider, model_id, input_prompt))
-
-    results = await asyncio.gather(*tasks)
-    logging.info(f"Completed {len(results)} queries")
-    return results
+        results = await asyncio.gather(*tasks)
+        logging.info(f"Completed {len(results)} queries")
+        return results
+    except Exception as e:
+        logging.error(f"Error in run_comparison: {str(e)}")
+        logging.error(traceback.format_exc())
+        raise
 
 
 @bp.errorhandler(404)
@@ -51,6 +63,19 @@ def not_found_error(error):
             }
         ),
         404,
+    )
+
+
+@bp.errorhandler(405)
+def method_not_allowed_error(error):
+    return (
+        jsonify(
+            {
+                "error": "Method Not Allowed",
+                "message": "The method is not allowed for the requested URL.",
+            }
+        ),
+        405,
     )
 
 

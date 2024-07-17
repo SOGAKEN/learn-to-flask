@@ -7,6 +7,8 @@ from datetime import datetime
 import boto3
 from botocore.exceptions import ClientError
 
+from app.utils import PROMPTS
+
 aws_client = boto3.client(
     "bedrock",
     region_name=os.getenv("AWS_DEFAULT_REGION", "us-east-1"),
@@ -33,11 +35,27 @@ async def query_aws(model_id, input_text):
             aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
         )
 
+        model_config = next(
+            (config for config in PROMPTS.values() if config["model_id"] == model_id),
+            None,
+        )
+        if not model_config:
+            raise ValueError(f"Model configuration not found for {model_id}")
+
+        prompt = model_config["prompt_template"].format(input_text=input_text)
+        body = json.dumps(
+            {
+                "prompt": prompt,
+                "max_tokens_to_sample": model_config.get("max_tokens", 300),
+                "temperature": model_config.get("temperature", 0.5),
+            }
+        )
+
         response = runtime_client.invoke_model(
             modelId=model_id,
             contentType="application/json",
             accept="application/json",
-            body=json.dumps({"prompt": input_text}),
+            body=body,
         )
         return json.loads(response["body"].read())
     except ClientError as e:

@@ -1,0 +1,23 @@
+[aws.anthropic-claude-v1]
+model_id = "anthropic.claude-v1"
+prompt_template = "Human: {input_text}\n\nAssistant:"
+max_tokens = 300
+temperature = 0.5
+
+[aws.ai21-j2-grande-instruct]
+model_id = "ai21.j2-grande-instruct"
+prompt_template = "{input_text}"
+max_tokens = 200
+temperature = 0.7
+
+[gcp.text-bison]
+model_id = "text-bison"
+prompt_template = "{input_text}"
+max_output_tokens = 256
+temperature = 0.2
+
+[azure.gpt-35-turbo]
+model_id = "gpt-35-turbo"
+prompt_template = "You are a helpful assistant.\n\nUser: {input_text}\n\nAssistant:"
+max_tokens = 150
+temperature = 0.7
