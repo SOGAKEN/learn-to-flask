@@ -7,7 +7,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# 8080 ポートを明示的に公開
+# entrypoint.shに実行権限を付与
+RUN chmod +x entrypoint.sh
+
 EXPOSE 8080
 
-CMD ["python", "run.py"]
+# ENTRYPOINTを使用してentrypoint.shを実行
+ENTRYPOINT ["./entrypoint.sh"]

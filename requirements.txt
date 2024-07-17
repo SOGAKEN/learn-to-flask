@@ -3,4 +3,3 @@ google-cloud-bigquery
 google-cloud-aiplatform
 boto3
 azure-ai-textanalytics
-pytest

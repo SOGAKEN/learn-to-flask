@@ -1,10 +1,12 @@
+import json
+import logging
+import os
+import time
+from datetime import datetime
+
 from azure.ai.textanalytics import TextAnalyticsClient
 from azure.core.credentials import AzureKeyCredential
 from azure.core.exceptions import AzureError
-import json
-import time
-from datetime import datetime
-import os
 
 azure_client = TextAnalyticsClient(
     endpoint=os.getenv("AZURE_ENDPOINT"),
@@ -25,7 +27,7 @@ async def query_azure(model_id, input_text):
             "confidence_scores": response[0].confidence_scores.to_dict(),
         }
     except AzureError as e:
-        print(f"Error querying Azure model {model_id}: {e}")
+        logging.error(f"Error querying Azure model {model_id}: {e}")
         return {"error": str(e)}
 
 
@@ -38,7 +40,7 @@ async def run_query(provider, model_id, input_text):
     end_time = time.time()
 
     return {
-        "request_time": request_time,
+        "request_time": request_time.isoformat(),
         "provider": provider,
         "model_id": model_id,
         "response_time": end_time - start_time,
