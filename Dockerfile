@@ -6,7 +6,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
-
+ENV PYTHONUNBUFFERED=1
 # entrypoint.shに実行権限を付与
 RUN chmod +x entrypoint.sh
 

@@ -1,14 +1,14 @@
 # 変数定義
-PROJECT_ID := your-gcp-project-id
-REGION := us-central1
-REPOSITORY := your-artifact-registry-repo
+PROJECT_ID := docker-cloudran-works
+REGION := asia-northeast1
+REPOSITORY := llm
 IMAGE_NAME := llm-comparison-app
 VERSION := $(shell git rev-parse --short HEAD)
 FULL_IMAGE_NAME := $(REGION)-docker.pkg.dev/$(PROJECT_ID)/$(REPOSITORY)/$(IMAGE_NAME):$(VERSION)
 
 # デフォルトのターゲット
 .PHONY: all
-all: test build push deploy
+all: build push
 
 # 依存関係のインストール
 .PHONY: install
@@ -23,7 +23,7 @@ test:
 # Docker イメージのビルド
 .PHONY: build
 build:
-	docker build -t $(FULL_IMAGE_NAME) .
+	docker build --platform linux/amd64 -t $(FULL_IMAGE_NAME) .
 
 # Artifact Registry への Docker イメージのプッシュ
 .PHONY: push
