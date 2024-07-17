@@ -7,7 +7,7 @@ from datetime import datetime
 import boto3
 from botocore.exceptions import ClientError
 
-from app.utils import PROMPTS
+from app import PROMPTS
 
 aws_client = boto3.client(
     "bedrock",

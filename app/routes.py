@@ -5,8 +5,8 @@ import traceback
 
 from flask import Blueprint, jsonify, request
 
+from app import PROMPTS
 from app.services import aws_service, azure_service, gcp_service
-from app.utils import PROMPTS
 
 bp = Blueprint("main", __name__)
 
@@ -25,6 +25,8 @@ def run_llm_comparison():
 
     try:
         input_prompt = request.json.get("prompt", "Hello, LLM!")
+        logging.info(f"Received prompt: {input_prompt}")
+        logging.info(f"PROMPTS content: {PROMPTS}")
         results = asyncio.run(run_comparison(input_prompt))
         return jsonify(
             {"message": "Comparison completed successfully", "results": results}
@@ -38,10 +40,9 @@ def run_llm_comparison():
 async def run_comparison(input_prompt):
     try:
         tasks = []
-        for provider, config in PROMPTS.items():
-            service = getattr(
-                sys.modules[__name__], f"{provider.split('.')[0]}_service"
-            )
+        for provider_model, config in PROMPTS.items():
+            provider = provider_model.split(".")[0]  # 'aws.claude-v2' から 'aws' を取得
+            service = getattr(sys.modules[__name__], f"{provider}_service")
             tasks.append(service.run_query(provider, config["model_id"], input_prompt))
 
         results = await asyncio.gather(*tasks)
