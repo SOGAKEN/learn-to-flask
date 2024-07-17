@@ -23,7 +23,7 @@ test:
 # Docker イメージのビルド
 .PHONY: build
 build:
-	docker build --platform linux/amd64 -t $(FULL_IMAGE_NAME) .
+	docker build --no-cache --platform linux/amd64 --progress=plain -t $(FULL_IMAGE_NAME) .
 
 # Artifact Registry への Docker イメージのプッシュ
 .PHONY: push

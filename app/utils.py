@@ -1,17 +1,12 @@
 import logging
-import os
 
 import toml
 
 
-def load_prompts():
+def load_prompts_config(file_path):
     try:
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        toml_path = os.path.join(script_dir, "..", "prompts.toml")
-        with open(toml_path, "r") as f:
-            prompts = toml.load(f)
-        logging.info(f"Successfully loaded prompts: {prompts}")
-        return prompts
+        with open(file_path, "r") as config_file:
+            return toml.load(config_file)
     except Exception as e:
-        logging.error(f"Error loading prompts.toml: {e}")
-        return {}
+        logging.error(f"Failed to load PROMPTS configuration: {e}")
+        raise RuntimeError(f"Failed to load configuration from {file_path}")

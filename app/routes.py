@@ -3,10 +3,9 @@ import logging
 import sys
 import traceback
 
-from flask import Blueprint, jsonify, request
-
-from app import PROMPTS
-from app.services import aws_service, azure_service, gcp_service
+from flask import Blueprint
+from flask import current_app as app
+from flask import jsonify, request
 
 bp = Blueprint("main", __name__)
 
@@ -25,9 +24,10 @@ def run_llm_comparison():
 
     try:
         input_prompt = request.json.get("prompt", "Hello, LLM!")
+        prompts = app.config["PROMPTS"]
         logging.info(f"Received prompt: {input_prompt}")
-        logging.info(f"PROMPTS content: {PROMPTS}")
-        results = asyncio.run(run_comparison(input_prompt))
+        logging.info(f"PROMPTS content: {prompts}")
+        results = asyncio.run(run_comparison(input_prompt, prompts))
         return jsonify(
             {"message": "Comparison completed successfully", "results": results}
         )
@@ -37,13 +37,16 @@ def run_llm_comparison():
         return jsonify({"error": "Internal Server Error", "message": str(e)}), 500
 
 
-async def run_comparison(input_prompt):
+async def run_comparison(input_prompt, prompts):
     try:
         tasks = []
-        for provider_model, config in PROMPTS.items():
-            provider = provider_model.split(".")[0]  # 'aws.claude-v2' から 'aws' を取得
+        for provider_model, config in prompts.items():
+            provider = provider_model.split(".")[0]
             service = getattr(sys.modules[__name__], f"{provider}_service")
-            tasks.append(service.run_query(provider, config["model_id"], input_prompt))
+            model_id = config.get("model_id")
+            if not model_id:
+                raise ValueError(f"No model_id found for {provider_model}")
+            tasks.append(service.run_query(provider, model_id, input_prompt))
 
         results = await asyncio.gather(*tasks)
         logging.info(f"Completed {len(results)} queries")
@@ -52,34 +55,3 @@ async def run_comparison(input_prompt):
         logging.error(f"Error in run_comparison: {str(e)}")
         logging.error(traceback.format_exc())
         raise
-
-
-@bp.errorhandler(404)
-def not_found_error(error):
-    return (
-        jsonify(
-            {
-                "error": "Not Found",
-                "message": "The requested URL was not found on the server.",
-            }
-        ),
-        404,
-    )
-
-
-@bp.errorhandler(405)
-def method_not_allowed_error(error):
-    return (
-        jsonify(
-            {
-                "error": "Method Not Allowed",
-                "message": "The method is not allowed for the requested URL.",
-            }
-        ),
-        405,
-    )
-
-
-@bp.errorhandler(500)
-def internal_error(error):
-    return jsonify({"error": "Internal Server Error", "message": str(error)}), 500

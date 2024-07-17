@@ -1,17 +1,17 @@
 from flask import Flask
 
-from app.utils import load_prompts
-from config import Config
-
-PROMPTS = load_prompts()
+from .utils import load_prompts_config
 
 
-def create_app(config_class=Config):
+def create_app():
     app = Flask(__name__)
-    app.config.from_object(config_class)
 
-    from app import routes
+    # Load PROMPTS configuration
+    app.config["PROMPTS"] = load_prompts_config("prompts.toml")
 
-    app.register_blueprint(routes.bp)
+    # Setup routes and other configurations
+    from .routes import bp
+
+    app.register_blueprint(bp)
 
     return app
